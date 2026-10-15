@@ -3,6 +3,7 @@ import {
   getAuth,
   onAuthStateChanged,
   GoogleAuthProvider,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js'
@@ -32,6 +33,7 @@ if (googleDriveProvider) googleDriveProvider.addScope('https://www.googleapis.co
 
 export {
   onAuthStateChanged,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
   GoogleAuthProvider

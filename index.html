@@ -308,9 +308,20 @@
           <h3>Acesso administrativo</h3>
         </div>
         <div id="loginForm" class="login-form">
-          <p class="modal-description">Entre com uma conta Google autorizada nesta escola.</p>
+          <p class="modal-description">A equipe da escola entra com uma conta Google autorizada.</p>
           <button class="btn btn-primary" id="googleLoginBtn" type="button">Entrar com Google</button>
         </div>
+        <form id="credeLoginForm" class="login-form">
+          <label>
+            <span>Email administrativo CREDE</span>
+            <input type="email" value="admin@crede17.ce.gov.br" autocomplete="username" readonly />
+          </label>
+          <label>
+            <span>Senha</span>
+            <input id="credePasswordInput" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn btn-secondary" id="credeLoginBtn" type="submit">Entrar como administração CREDE</button>
+        </form>
       </div>
     </div>
 

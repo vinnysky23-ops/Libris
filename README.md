@@ -19,12 +19,13 @@ Não apague o Firestore nem os backups legados antes de confirmar a migração e
 
 ## Configuração Firebase
 
-1. No Firebase Console do projeto `librisce`, habilite **Authentication > Google** e adicione o domínio publicado em **Authorized domains**.
-2. Ative a Google Drive API no Google Cloud do projeto. O app solicita o escopo `drive.file` somente quando alguém usa o botão de backup.
-3. Entre no computador da biblioteca primeiro com a conta Google Libris. Em uma instalação local vazia, essa primeira conta recebe o painel de configuração.
-4. Cadastre o identificador e o nome da escola, os emails escolares autorizados e os parâmetros EmailJS. Os dados ficam no IndexedDB daquele computador.
+1. No Firebase Console do projeto `librisce`, habilite **Authentication > Email/Password** e **Authentication > Google**. Adicione o domínio HTTPS publicado em **Authorized domains**.
+2. Em **Authentication > Users**, crie `admin@crede17.ce.gov.br` com uma senha nova, forte e exclusiva. A senha digitada no app é validada pelo Firebase Authentication; ela não está no código. Como a senha anterior foi compartilhada em conversa, não a reutilize.
+3. Ative a Google Drive API no Google Cloud do projeto. O app solicita o escopo `drive.file` somente quando alguém usa o botão de backup.
+4. No computador da biblioteca, entre primeiro com `admin@crede17.ce.gov.br` e a senha criada no Firebase. Essa conta abre o painel de configuração Libris.
+5. Cadastre o identificador e o nome da escola, os emails Google autorizados e os parâmetros EmailJS. Os dados ficam no IndexedDB daquele computador.
 
-O login Google é autenticado pelo Firebase Authentication. A função agendada antiga de backup continua no código de servidor e pode depender do Firestore; ela não é chamada pelo PWA.
+O login administrativo usa Firebase Authentication por email/senha. Os funcionários da escola entram com Google, e o app compara o email com a lista local autorizada. A função agendada antiga de backup continua no código de servidor e pode depender do Firestore; ela não é chamada pelo PWA.
 
 ## Migração de dados legados
 

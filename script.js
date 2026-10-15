@@ -1,7 +1,7 @@
 /* Updated script.js — DOM blindagem e limpeza imediata de subscriptions ao signOut.
    Preserva obrigatoriedade schoolId, validações de estoque e regras de autenticação. */
 
-import { firebaseReady, auth, googleProvider, googleDriveProvider, GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from './firebase.js'
+import { firebaseReady, auth, googleProvider, googleDriveProvider, GoogleAuthProvider, onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, signOut } from './firebase.js'
 import { createLocalStore } from './local-store.mjs'
 import { createLocalDataApi } from './local-data.mjs'
 import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm'
@@ -9,6 +9,7 @@ import * as XLSX from 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm'
 const localStore = createLocalStore()
 const localData = createLocalDataApi(localStore)
 const { db, collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc, query, where, onSnapshot, runTransaction, writeBatch, serverTimestamp, Timestamp, increment } = localData
+const LIBRIS_ADMIN_EMAIL = 'admin@crede17.ce.gov.br'
 
 const config = {
   organizationName: 'Libris',
@@ -1942,7 +1943,6 @@ async function saveLibrisConfiguration(event) {
     config.currentSchoolId = schoolId
     config.schoolName = schoolName
     config.emailjs = school.emailjs
-    await setDoc(doc(db, '_local_metadata', 'libris-admin'), { email: state.user.email.toLowerCase() })
     toast('Configuração local salva. Os emails autorizados podem entrar nesta máquina.')
   } catch (err) {
     error(err, 'Não foi possível salvar a configuração local.')
@@ -2073,16 +2073,16 @@ async function resolveUserSchool(user) {
   try {
     const email = String(user.email || '').trim().toLowerCase()
     if (!email) return null
-
-    const bootstrapRef = doc(db, '_local_metadata', 'libris-admin')
-    const bootstrap = await getDoc(bootstrapRef)
-    if (bootstrap.exists() && String(bootstrap.data().email || '').toLowerCase() === email) {
-      return { role: 'libris_admin', email }
+    if (email === LIBRIS_ADMIN_EMAIL) {
+      const usesPasswordProvider = user.providerData?.some((provider) => provider.providerId === 'password')
+      return usesPasswordProvider ? { role: 'libris_admin', email } : null
     }
 
     const schools = await localStore.list('schools')
     const school = schools.find((item) => (item.authorizedEmails || []).map((value) => String(value).toLowerCase()).includes(email))
     if (school) {
+      const usesGoogleProvider = user.providerData?.some((provider) => provider.providerId === 'google.com')
+      if (!usesGoogleProvider) return null
       const profile = { role: 'admin', schoolId: school.id, email, active: true }
       await setDoc(doc(db, 'users', user.uid), profile, { merge: true })
       return profile
@@ -2096,11 +2096,6 @@ async function resolveUserSchool(user) {
       const allowedEmails = schoolDoc.exists() ? schoolDoc.data().authorizedEmails : null
       if (Array.isArray(allowedEmails) && allowedEmails.length && !allowedEmails.map((value) => String(value).toLowerCase()).includes(email)) return null
       return { ...profile, email }
-    }
-
-    if (!bootstrap.exists() && schools.length === 0 && !profile) {
-      await setDoc(bootstrapRef, { email, initializedAt: new Date() })
-      return { role: 'libris_admin', email }
     }
 
     return null
@@ -2140,6 +2135,28 @@ if ($('#googleLoginBtn')) {
     } catch (err) {
       error(err, 'Não foi possível entrar com a conta Google.')
     } finally {
+      loading(button, false)
+    }
+  }
+}
+
+if ($('#credeLoginForm')) {
+  $('#credeLoginForm').onsubmit = async (event) => {
+    event.preventDefault()
+    const button = $('#credeLoginBtn')
+    const password = $('#credePasswordInput')?.value || ''
+    loading(button, true, 'Validando acesso…')
+    if (!canUseFirebase || !auth) {
+      toast('Autenticação indisponível. Verifique o Firebase Authentication.', 'error')
+      loading(button, false)
+      return
+    }
+    try {
+      await signInWithEmailAndPassword(auth, LIBRIS_ADMIN_EMAIL, password)
+    } catch (err) {
+      error(err, 'Não foi possível entrar com a conta administrativa CREDE.')
+    } finally {
+      if ($('#credePasswordInput')) $('#credePasswordInput').value = ''
       loading(button, false)
     }
   }
